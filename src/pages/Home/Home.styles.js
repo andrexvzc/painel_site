@@ -34,10 +34,10 @@ export const MainLayout = styled.div`
 export const Sidebar = styled.aside`
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
   position: sticky;
   top: 20px;
-  height: fit-content;
+  height: calc(100vh - 40px);
 `
 
 export const SidebarItem = styled.div`
@@ -55,6 +55,56 @@ export const SidebarItem = styled.div`
   &:hover {
     background-color: ${props => props.theme.sidebarHover};
   }
+`
+
+export const ProfileSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-top: auto;
+  border-radius: 9999px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: ${props => props.theme.sidebarHover};
+  }
+`
+
+export const StatusIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #28a745;
+  font-size: 12px;
+  font-weight: 600;
+
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #28a745;
+  }
+`
+
+export const TipBox = styled.div`
+  background-color: ${props => props.theme.surface};
+  border: 1px solid ${props => props.theme.cardBorder};
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 16px;
+`
+
+export const PlatformBadge = styled.span`
+  background-color: ${props => props.theme.border};
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: inline-block;
 `
 
 export const Feed = styled.main`
@@ -190,20 +240,38 @@ export const ActionItem = styled.div`
   }
 `
 
-export const ThemeToggle = styled.div`
+export const ThemeToggle = styled.button`
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: ${props => props.theme.primary};
+  color: #ffffff;
+  border: none;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 9999px;
+  justify-content: center;
   cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: auto;
-  color: ${props => props.theme.text};
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s, background-color 0.2s;
+  z-index: 1000;
+  font-size: 1.2rem;
 
   &:hover {
-    background-color: ${props => props.theme.sidebarHover};
+    transform: scale(1.1);
+    background-color: #1a8cd8;
   }
+
+  &:active {
+    transform: scale(0.95);
+  }
+`
+
+export const PlatformIcon = styled.i`
+  margin-right: 8px;
+  color: ${props => props.color || 'inherit'};
 `
 
 export const StatusText = styled.p`

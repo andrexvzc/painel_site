@@ -12,100 +12,84 @@ const Home = () => {
   const { isDarkMode, toggleTheme } = useContext(ThemeContext)
 
   const sidebarItems = [
-    { label: 'Feed', active: true },
-    { label: 'Em Alta', active: false },
-    { label: 'Instagram', active: false },
-    { label: 'Twitter/X', active: false },
-    { label: 'Youtube', active: false },
-    { label: 'Salvos', active: false },
-    { label: 'Notificações', active: false },
+    { label: 'Feed', active: true, icon: 'fa-house' },
+    { label: 'Em Alta', active: false, icon: 'fa-fire' },
+    { label: 'Instagram', active: false, icon: 'fa-brands fa-instagram' },
+    { label: 'Twitter / X', active: false, icon: 'fa-brands fa-twitter' },
+    { label: 'YouTube', active: false, icon: 'fa-brands fa-youtube' },
+    { label: 'Salvos', active: false, icon: 'fa-bookmark' },
+    { label: 'Notificações', active: false, icon: 'fa-bell' },
   ]
 
   const feedItems = [
     { 
       id: 1, 
-      user: 'John Doe', 
-      handle: '@johndoe', 
-      content: 'Building a new React application with a Twitter-like layout! #webdev #reactjs',
-      image: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800&auto=format&fit=crop&q=60',
-      stats: { replies: 12, retweets: 5, likes: 48, views: '1.2k' }
+      platform: 'Instagram',
+      platformIcon: 'fa-brands fa-instagram',
+      platformColor: '#E1306C',
+      user: 'National Geographic', 
+      handle: '@natgeo', 
+      content: 'The Amazon rainforest is home to some of the most dramatic landscapes on Earth. From sweeping mountain vistas to deep jungle canyons, its scale is truly breathtaking.',
+      image: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?w=800&auto=format&fit=crop&q=60',
+      stats: { replies: 124, retweets: 450, likes: '12k', views: '200k' }
     },
     { 
       id: 2, 
-      user: 'Jane Smith', 
-      handle: '@janesmith', 
-      content: 'Just discovered styled-components. It is amazing how clean the code becomes.',
-      stats: { replies: 4, retweets: 2, likes: 25, views: '800' }
+      platform: 'Twitter / X',
+      platformIcon: 'fa-brands fa-twitter',
+      platformColor: '#000000',
+      user: 'Elon Musk', 
+      handle: '@elonmusk', 
+      content: 'Engineering is the closest thing to magic that exists in the real world. Applied science solving complex problems for humanity.',
+      stats: { replies: '25k', retweets: '45k', likes: '320k', views: '15M' }
     },
     { 
       id: 3, 
-      user: 'Tech News', 
-      handle: '@technews', 
-      content: 'The future of web development is looking bright with AI-assisted coding tools.',
-      image: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop&q=60',
-      stats: { replies: 45, retweets: 89, likes: 320, views: '15k' }
+      platform: 'YouTube',
+      platformIcon: 'fa-brands fa-youtube',
+      platformColor: '#FF0000',
+      user: 'Tech Reviewer', 
+      handle: '@techrev', 
+      content: 'Building the ultimate workstation for 2026. This setup is absolute overkill but so satisfying.',
+      image: 'https://images.unsplash.com/photo-1547082299-de196ea013d6?w=800&auto=format&fit=crop&q=60',
+      stats: { replies: 890, retweets: 120, likes: '15k', views: '1.2M' }
     },
     { 
       id: 4, 
-      user: 'Dev Guru', 
-      handle: '@devguru', 
-      content: 'Check out this new CSS Grid tutorial. It makes layouts so much easier!',
-      stats: { replies: 8, retweets: 12, likes: 67, views: '2.4k' }
-    },
-    { 
-      id: 5, 
-      user: 'Design Weekly', 
-      handle: '@designweekly', 
-      content: 'Top 10 UI trends to watch in 2026. Minimalist designs are still leading.',
-      image: 'https://images.unsplash.com/photo-1586717791821-3f44a563dc4c?w=800&auto=format&fit=crop&q=60',
-      stats: { replies: 22, retweets: 15, likes: 110, views: '5.6k' }
-    },
-    { 
-      id: 6, 
-      user: 'React Insider', 
-      handle: '@reactinsider', 
-      content: 'React 19 features you should start using today for better performance.',
-      stats: { replies: 15, retweets: 30, likes: 145, views: '10k' }
-    },
-    { 
-      id: 7, 
+      platform: 'Instagram',
+      platformIcon: 'fa-brands fa-instagram',
+      platformColor: '#E1306C',
       user: 'Traveler', 
       handle: '@worldtraveler', 
-      content: 'Just arrived in Kyoto. The temples are absolutely breathtaking! The mixture of tradition and modernity here is something you have to experience at least once in your life.',
+      content: 'Kyoto mornings. The silence of the temples is something everyone should experience.',
       image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&auto=format&fit=crop&q=60',
-      stats: { replies: 5, retweets: 8, likes: 92, views: '3.1k' }
-    },
-    { 
-      id: 8, 
-      user: 'Quick Tips', 
-      handle: '@quicktips', 
-      content: 'Pro tip: Use `Ctrl + D` to select the next occurrence of a word in VS Code.',
-      stats: { replies: 2, retweets: 15, likes: 55, views: '1.2k' }
-    },
-    { 
-      id: 9, 
-      user: 'Foodie', 
-      handle: '@foodie', 
-      content: 'Homemade sourdough bread! It took 3 days but it was worth it. Look at that crust!',
-      image: 'https://images.unsplash.com/photo-1585478259715-876acc5be8eb?w=800&auto=format&fit=crop&q=60',
-      stats: { replies: 18, retweets: 4, likes: 156, views: '4.8k' }
+      stats: { replies: 45, retweets: 12, likes: 850, views: '12k' }
     },
   ]
 
   const trends = [
-    { category: 'Technology · Trending', title: '#ReactJS', posts: '125K posts' },
-    { category: 'Business · Trending', title: 'Silicon Valley', posts: '45.2K posts' },
-    { category: 'Entertainment · Trending', title: 'New Movie Trailer', posts: '89K posts' },
-    { category: 'Sports · Trending', title: 'World Cup 2026', posts: '1.2M posts' },
+    { category: 'Trending', title: '#InteligenciaArtificial', posts: '1.2M posts' },
+    { category: 'Trending', title: '#Webb', posts: '45.2K posts' },
+    { category: 'Trending', title: '#ReactJS', posts: '89K posts' },
+    { category: 'Trending', title: '#Tecnologia', posts: '250K posts' },
+    { category: 'Trending', title: '#NASA', posts: '120K posts' },
+    { category: 'Trending', title: '#OpenAI', posts: '310K posts' },
   ]
 
   const connectedSources = [
-    { id: 1, name: 'Google Search', handle: 'google.com', avatar: 'GS' },
-    { id: 2, name: 'Reddit API', handle: 'reddit.com', avatar: 'RD' },
-    { id: 3, name: 'X/Twitter', handle: 'twitter.com', avatar: 'XT' },
+    { id: 1, name: 'Instagram', icon: 'fa-brands fa-instagram', color: '#E1306C', status: '4 posts carregados' },
+    { id: 2, name: 'Twitter / X', icon: 'fa-brands fa-twitter', color: '#000000', status: '4 posts carregados' },
+    { id: 3, name: 'YouTube', icon: 'fa-brands fa-youtube', color: '#FF0000', status: '4 posts carregados' },
   ]
 
-    const filters = ['Tudo', 'Instagram', 'X', 'Reddit', 'OnlyFans']
+  const filters = [
+    { label: 'Tudo', icon: 'fa-border-all' },
+    { label: 'Instagram', icon: 'fa-brands fa-instagram' },
+    { label: 'X', icon: 'fa-brands fa-twitter' },
+    { label: 'Youtube', icon: 'fa-brands fa-youtube' },
+    { label: 'OnlyFans', icon: 'fa-brands fa-linkedin' }
+    
+  ]
 
   return (
     <S.MainLayout>
@@ -115,33 +99,37 @@ const Home = () => {
         </Typography>
         {sidebarItems.map((item) => (
           <S.SidebarItem key={item.label} active={item.active}>
+            <S.PlatformIcon className={`fa-solid ${item.icon}`} />
             <Typography variant="body" style={{ fontWeight: item.active ? 700 : 400 }}>
               {item.label}
             </Typography>
           </S.SidebarItem>
         ))}
         
-        <S.ThemeToggle onClick={toggleTheme}>
-          <Typography variant="body">
-            {isDarkMode ? '🌙 Dark Mode' : '☀️ Light Mode'}
-          </Typography>
-        </S.ThemeToggle>
+        <S.ProfileSection>
+          <S.Avatar>VC</S.Avatar>
+          <div>
+            <Typography variant="body" style={{ fontWeight: 700 }}>Você</Typography>
+            <Typography variant="small" color="#666">@minha_conta</Typography>
+          </div>
+        </S.ProfileSection>
       </S.Sidebar>
 
       <S.Feed>
         <S.FeedHeader>
           <Card padding="16px">
-            <Typography variant="h3" style={{ marginBottom: '16px' }}>Home</Typography>
+       
             <Flex direction="column" gap="12px">
-              <Input placeholder="Buscar no Painel+" style={{ marginBottom: 0 }} />
+              <Input placeholder="Buscar posts, pessoas, hashtags..." style={{ marginBottom: 0 }} />
               <S.FilterContainer>
                 {filters.map((filter) => (
                   <S.FilterPill
-                    key={filter}
-                    active={activeFilter === filter}
-                    onClick={() => setActiveFilter(filter)}
+                    key={filter.label}
+                    active={activeFilter === filter.label}
+                    onClick={() => setActiveFilter(filter.label)}
                   >
-                    {filter}
+                    <S.PlatformIcon className={filter.icon} style={{ marginRight: '6px' }} />
+                    {filter.label}
                   </S.FilterPill>
                 ))}
               </S.FilterContainer>
@@ -152,6 +140,10 @@ const Home = () => {
         {feedItems.map((post) => (
           <Card key={post.id} padding="20px">
             <Flex direction="column" gap="8px">
+              <S.PlatformBadge>
+                <S.PlatformIcon className={post.platformIcon} style={{ fontSize: '10px' }} />
+                {post.platform}
+              </S.PlatformBadge>
               <Flex gap="8px" align="center">
                 <Typography variant="body" style={{ fontWeight: 700 }}>
                   {post.user}
@@ -166,21 +158,24 @@ const Home = () => {
               
               {post.image && <S.PostImage src={post.image} alt="Post content" />}
 
+              {post.platform === 'Twitter / X' && (
+                <Button variant="secondary" style={{ marginTop: '12px', width: 'fit-content' }}>
+                  Ver original
+                </Button>
+              )}
+
               <S.ActionGroup>
                 <S.ActionItem hoverColor="#1d9bf0">
-                  <span>💬</span> {post.stats.replies}
+                  <i className="fa-regular fa-comment"></i> {post.stats.replies}
                 </S.ActionItem>
                 <S.ActionItem hoverColor="#00ba7c">
-                  <span>🔁</span> {post.stats.retweets}
+                  <i className="fa-solid fa-retweet"></i> {post.stats.retweets}
                 </S.ActionItem>
                 <S.ActionItem hoverColor="#f91880">
-                  <span>❤️</span> {post.stats.likes}
+                  <i className="fa-regular fa-heart"></i> {post.stats.likes}
                 </S.ActionItem>
                 <S.ActionItem hoverColor="#1d9bf0">
-                  <span>📊</span> {post.stats.views}
-                </S.ActionItem>
-                <S.ActionItem hoverColor="#1d9bf0">
-                  <span>🔖</span>
+                  <i className="fa-solid fa-chart-simple"></i> {post.stats.views}
                 </S.ActionItem>
               </S.ActionGroup>
             </Flex>
@@ -191,13 +186,10 @@ const Home = () => {
       <S.TrendsSidebar className="trends-sidebar">
         <Card padding="0">
           <div style={{ padding: '16px' }}>
-            <Typography variant="h3">Em alta</Typography>
+            <Typography variant="h3">Em Alta Agora</Typography>
           </div>
           {trends.map((trend) => (
             <S.TrendItem key={trend.title}>
-              <Typography variant="small" color="#666">
-                {trend.category}
-              </Typography>
               <Typography variant="body" style={{ fontWeight: 700, display: 'block', margin: '4px 0' }}>
                 {trend.title}
               </Typography>
@@ -220,28 +212,38 @@ const Home = () => {
           {connectedSources.map((source) => (
             <S.SourceItem key={source.id}>
               <S.SourceInfo>
-                <S.Avatar>{source.avatar}</S.Avatar>
+                <S.Avatar style={{ backgroundColor: source.color, color: '#fff' }}>
+                  <i className={source.icon}></i>
+                </S.Avatar>
                 <div>
                   <Typography variant="body" style={{ fontWeight: 700, display: 'block' }}>
                     {source.name}
                   </Typography>
+                  <S.StatusIndicator>
+                    Ativo
+                  </S.StatusIndicator>
                   <Typography variant="small" color="#666">
-                    {source.handle}
+                    {source.status}
                   </Typography>
                 </div>
               </S.SourceInfo>
-              <Button variant="secondary" onClick={() => {}}>
-                Conectar
-              </Button>
             </S.SourceItem>
           ))}
-          <div style={{ padding: '16px', borderTop: '1px solid #f0f0f0' }}>
-            <Typography variant="body" color="#1d9bf0" style={{ cursor: 'pointer' }}>
-              Show more
-            </Typography>
-          </div>
         </Card>
+
+        <S.TipBox>
+          <Typography variant="body" style={{ fontWeight: 700, marginBottom: '8px', display: 'block' }}>
+            💡 Dica
+          </Typography>
+          <Typography variant="small" color="#666">
+            Conecte suas contas reais via API para sincronização em tempo real dos seus feeds e análises personalizadas.
+          </Typography>
+        </S.TipBox>
       </S.TrendsSidebar>
+
+      <S.ThemeToggle onClick={toggleTheme} title="Alternar Tema">
+        <i className={`fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+      </S.ThemeToggle>
     </S.MainLayout>
   )
 }
