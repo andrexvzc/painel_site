@@ -7,8 +7,10 @@ React App com Vite.
 - React + Vite
 - React Router DOM
 - Zustand
+- Styled Components
 - Axios
 - React Hook Form + Zod
+- Vitest + Testing Library
 - ESLint + Prettier
 
 ## Instalação
@@ -26,6 +28,7 @@ npm run dev
 | `npm run dev` | Inicia o servidor de desenvolvimento |
 | `npm run build` | Gera o build de produção |
 | `npm run preview` | Visualiza o build localmente |
+| `npm run test` | Executa os testes unitários |
 | `npm run lint` | Verifica problemas de lint |
 | `npm run lint:fix` | Corrige problemas de lint |
 | `npm run format` | Formata o código com Prettier |
