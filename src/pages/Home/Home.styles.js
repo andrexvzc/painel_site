@@ -71,6 +71,23 @@ export const ProfileSection = styled.div`
   }
 `
 
+export const LogoutButton = styled.button`
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${props => props.theme.textSecondary};
+  font-size: 1rem;
+  padding: 8px;
+  border-radius: 50%;
+  transition: color 0.2s, background-color 0.2s;
+
+  &:hover {
+    color: #dc3545;
+    background-color: ${props => props.theme.border};
+  }
+`
+
 export const StatusIndicator = styled.div`
   display: flex;
   align-items: center;
@@ -230,10 +247,17 @@ export const ActionItem = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: ${props => props.theme.textSecondary};
+  color: ${props => (props.saved ? props.hoverColor || props.theme.primary : props.theme.textSecondary)};
   font-size: 13px;
   cursor: pointer;
   transition: color 0.2s;
+
+  /* Reset para quando renderizado como <button> (botão de salvar) */
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-weight: ${props => (props.saved ? 600 : 400)};
 
   &:hover {
     color: ${props => props.hoverColor || props.theme.primary};
@@ -267,6 +291,13 @@ export const ThemeToggle = styled.button`
   &:active {
     transform: scale(0.95);
   }
+`
+
+export const OriginalLink = styled.a`
+  display: inline-block;
+  width: fit-content;
+  margin-top: 12px;
+  text-decoration: none;
 `
 
 export const PlatformIcon = styled.i`

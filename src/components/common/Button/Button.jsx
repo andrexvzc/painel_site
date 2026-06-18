@@ -1,8 +1,8 @@
 import { StyledButton } from './Button.styles'
 
-export const Button = ({ children, variant = 'primary', onClick, disabled }) => {
+export const Button = ({ children, variant = 'primary', type = 'button', ...props }) => {
   return (
-    <StyledButton variant={variant} onClick={onClick} disabled={disabled}>
+    <StyledButton variant={variant} type={type} {...props}>
       {children}
     </StyledButton>
   )

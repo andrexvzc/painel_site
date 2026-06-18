@@ -1,71 +1,114 @@
-import { useState, useContext } from 'react'
+import { useState, useContext, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Typography } from '@components/common/Typography'
 import { Card } from '@components/common/Card'
 import { Flex } from '@components/common/Layout'
 import { Input } from '@components/common/Input'
 import { Button } from '@components/common/Button'
 import { ThemeContext } from '@/store/context/ThemeContext'
+import { useAuth } from '@store/authStore'
+import { getPosts, getSavedPosts, setSaved, ORIGEM_META } from '@services/posts'
 import * as S from './Home.styles'
 
 const Home = () => {
   const [activeFilter, setActiveFilter] = useState('Tudo')
+  const [view, setView] = useState('feed') // 'feed' | 'salvos'
+  const [feedItems, setFeedItems] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const { isDarkMode, toggleTheme } = useContext(ThemeContext)
+  const navigate = useNavigate()
+  const user = useAuth((s) => s.user)
+  const logout = useAuth((s) => s.logout)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
+
+  // Iniciais do usuário para o avatar (ex.: "Maria Silva" -> "MS")
+  const iniciais = (user?.nome || '?')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0].toUpperCase())
+    .join('')
+
+  // Mapeia o nome do filtro para a origem armazenada no banco
+  const filterToOrigem = {
+    Tudo: undefined,
+    Instagram: 'Instagram',
+    Twitter: 'Twitter',
+    Youtube: 'Youtube',
+    Noticia: 'Noticia',
+  }
+
+  useEffect(() => {
+    let ativo = true
+    setLoading(true)
+    setError(null)
+
+    const carregar = view === 'salvos' ? getSavedPosts() : getPosts(filterToOrigem[activeFilter])
+
+    carregar
+      .then((data) => {
+        if (ativo) setFeedItems(data)
+      })
+      .catch(() => {
+        if (ativo) setError('Não foi possível carregar as postagens. O servidor está rodando?')
+      })
+      .finally(() => {
+        if (ativo) setLoading(false)
+      })
+
+    return () => {
+      ativo = false
+    }
+  }, [activeFilter, view])
+
+  // Salva ou remove uma postagem dos salvos
+  const handleToggleSave = async (post) => {
+    const novoSalvo = !post.salvo
+    try {
+      await setSaved(post.id, novoSalvo)
+      setFeedItems((itens) => {
+        // Na aba "Salvos", remove o card ao desfavoritar
+        if (view === 'salvos' && !novoSalvo) {
+          return itens.filter((p) => p.id !== post.id)
+        }
+        return itens.map((p) => (p.id === post.id ? { ...p, salvo: novoSalvo ? 1 : 0 } : p))
+      })
+    } catch {
+      setError('Não foi possível salvar a postagem.')
+    }
+  }
 
   const sidebarItems = [
-    { label: 'Feed', active: true, icon: 'fa-house' },
-    { label: 'Em Alta', active: false, icon: 'fa-fire' },
-    { label: 'Instagram', active: false, icon: 'fa-brands fa-instagram' },
-    { label: 'Twitter / X', active: false, icon: 'fa-brands fa-twitter' },
-    { label: 'YouTube', active: false, icon: 'fa-brands fa-youtube' },
-    { label: 'Salvos', active: false, icon: 'fa-bookmark' },
-    { label: 'Notificações', active: false, icon: 'fa-bell' },
+    { label: 'Feed', icon: 'fa-solid fa-house', view: 'feed', filter: 'Tudo' },
+    { label: 'Em Alta', icon: 'fa-solid fa-fire' },
+    { label: 'Instagram', icon: 'fa-brands fa-instagram', view: 'feed', filter: 'Instagram' },
+    { label: 'Twitter / X', icon: 'fa-brands fa-twitter', view: 'feed', filter: 'Twitter' },
+    { label: 'YouTube', icon: 'fa-brands fa-youtube', view: 'feed', filter: 'Youtube' },
+    { label: 'Notícias', icon: 'fa-solid fa-newspaper', view: 'feed', filter: 'Noticia' },
+    { label: 'Salvos', icon: 'fa-solid fa-bookmark', view: 'salvos' },
+    { label: 'Notificações', icon: 'fa-solid fa-bell' },
   ]
 
-  const feedItems = [
-    { 
-      id: 1, 
-      platform: 'Instagram',
-      platformIcon: 'fa-brands fa-instagram',
-      platformColor: '#E1306C',
-      user: 'National Geographic', 
-      handle: '@natgeo', 
-      content: 'The Amazon rainforest is home to some of the most dramatic landscapes on Earth. From sweeping mountain vistas to deep jungle canyons, its scale is truly breathtaking.',
-      image: 'https://images.unsplash.com/photo-1542332213-9b5a5a3fad35?w=800&auto=format&fit=crop&q=60',
-      stats: { replies: 124, retweets: 450, likes: '12k', views: '200k' }
-    },
-    { 
-      id: 2, 
-      platform: 'Twitter / X',
-      platformIcon: 'fa-brands fa-twitter',
-      platformColor: '#000000',
-      user: 'Elon Musk', 
-      handle: '@elonmusk', 
-      content: 'Engineering is the closest thing to magic that exists in the real world. Applied science solving complex problems for humanity.',
-      stats: { replies: '25k', retweets: '45k', likes: '320k', views: '15M' }
-    },
-    { 
-      id: 3, 
-      platform: 'YouTube',
-      platformIcon: 'fa-brands fa-youtube',
-      platformColor: '#FF0000',
-      user: 'Tech Reviewer', 
-      handle: '@techrev', 
-      content: 'Building the ultimate workstation for 2026. This setup is absolute overkill but so satisfying.',
-      image: 'https://images.unsplash.com/photo-1547082299-de196ea013d6?w=800&auto=format&fit=crop&q=60',
-      stats: { replies: 890, retweets: 120, likes: '15k', views: '1.2M' }
-    },
-    { 
-      id: 4, 
-      platform: 'Instagram',
-      platformIcon: 'fa-brands fa-instagram',
-      platformColor: '#E1306C',
-      user: 'Traveler', 
-      handle: '@worldtraveler', 
-      content: 'Kyoto mornings. The silence of the temples is something everyone should experience.',
-      image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800&auto=format&fit=crop&q=60',
-      stats: { replies: 45, retweets: 12, likes: 850, views: '12k' }
-    },
-  ]
+  // Navegação da sidebar: define a view e, para origens, o filtro do feed
+  const handleSidebarClick = (item) => {
+    if (item.view === 'salvos') {
+      setView('salvos')
+    } else if (item.view === 'feed') {
+      setView('feed')
+      setActiveFilter(item.filter)
+    }
+  }
+
+  const isSidebarActive = (item) => {
+    if (item.view === 'salvos') return view === 'salvos'
+    if (item.view === 'feed') return view === 'feed' && activeFilter === item.filter
+    return false
+  }
 
   const trends = [
     { category: 'Trending', title: '#InteligenciaArtificial', posts: '1.2M posts' },
@@ -83,12 +126,11 @@ const Home = () => {
   ]
 
   const filters = [
-    { label: 'Tudo', icon: 'fa-border-all' },
-    { label: 'Instagram', icon: 'fa-brands fa-instagram' },
-    { label: 'X', icon: 'fa-brands fa-twitter' },
-    { label: 'Youtube', icon: 'fa-brands fa-youtube' },
-    { label: 'OnlyFans', icon: 'fa-brands fa-linkedin' }
-    
+    { label: 'Tudo', value: 'Tudo', icon: 'fa-solid fa-border-all' },
+    { label: 'Instagram', value: 'Instagram', icon: 'fa-brands fa-instagram' },
+    { label: 'Twitter / X', value: 'Twitter', icon: 'fa-brands fa-twitter' },
+    { label: 'YouTube', value: 'Youtube', icon: 'fa-brands fa-youtube' },
+    { label: 'Notícias', value: 'Noticia', icon: 'fa-solid fa-newspaper' },
   ]
 
   return (
@@ -97,90 +139,162 @@ const Home = () => {
         <Typography variant="h2" style={{ padding: '0 16px', marginBottom: '16px' }}>
           Painel+
         </Typography>
-        {sidebarItems.map((item) => (
-          <S.SidebarItem key={item.label} active={item.active}>
-            <S.PlatformIcon className={`fa-solid ${item.icon}`} />
-            <Typography variant="body" style={{ fontWeight: item.active ? 700 : 400 }}>
-              {item.label}
-            </Typography>
-          </S.SidebarItem>
-        ))}
+        {sidebarItems.map((item) => {
+          const active = isSidebarActive(item)
+          return (
+            <S.SidebarItem
+              key={item.label}
+              active={active}
+              onClick={() => handleSidebarClick(item)}
+            >
+              <S.PlatformIcon className={item.icon} />
+              <Typography variant="body" style={{ fontWeight: active ? 700 : 400 }}>
+                {item.label}
+              </Typography>
+            </S.SidebarItem>
+          )
+        })}
         
         <S.ProfileSection>
-          <S.Avatar>VC</S.Avatar>
-          <div>
-            <Typography variant="body" style={{ fontWeight: 700 }}>Você</Typography>
-            <Typography variant="small" color="#666">@minha_conta</Typography>
+          <S.Avatar>{iniciais}</S.Avatar>
+          <div style={{ overflow: 'hidden' }}>
+            <Typography variant="body" style={{ fontWeight: 700 }}>
+              {user?.nome || 'Você'}
+            </Typography>
+            <Typography variant="small" color="#666">
+              {user?.email}
+            </Typography>
           </div>
+          <S.LogoutButton onClick={handleLogout} title="Sair">
+            <i className="fa-solid fa-right-from-bracket"></i>
+          </S.LogoutButton>
         </S.ProfileSection>
       </S.Sidebar>
 
       <S.Feed>
         <S.FeedHeader>
           <Card padding="16px">
-       
-            <Flex direction="column" gap="12px">
-              <Input placeholder="Buscar posts, pessoas, hashtags..." style={{ marginBottom: 0 }} />
-              <S.FilterContainer>
-                {filters.map((filter) => (
-                  <S.FilterPill
-                    key={filter.label}
-                    active={activeFilter === filter.label}
-                    onClick={() => setActiveFilter(filter.label)}
-                  >
-                    <S.PlatformIcon className={filter.icon} style={{ marginRight: '6px' }} />
-                    {filter.label}
-                  </S.FilterPill>
-                ))}
-              </S.FilterContainer>
-            </Flex>
+            {view === 'salvos' ? (
+              <Flex align="center" gap="8px">
+                <i className="fa-solid fa-bookmark" style={{ color: '#f7b500' }}></i>
+                <Typography variant="h3" style={{ margin: 0 }}>
+                  Postagens salvas
+                </Typography>
+              </Flex>
+            ) : (
+              <Flex direction="column" gap="12px">
+                <Input
+                  placeholder="Buscar posts, pessoas, hashtags..."
+                  style={{ marginBottom: 0 }}
+                />
+                <S.FilterContainer>
+                  {filters.map((filter) => (
+                    <S.FilterPill
+                      key={filter.value}
+                      active={activeFilter === filter.value}
+                      onClick={() => setActiveFilter(filter.value)}
+                    >
+                      <S.PlatformIcon className={filter.icon} style={{ marginRight: '6px' }} />
+                      {filter.label}
+                    </S.FilterPill>
+                  ))}
+                </S.FilterContainer>
+              </Flex>
+            )}
           </Card>
         </S.FeedHeader>
 
-        {feedItems.map((post) => (
-          <Card key={post.id} padding="20px">
-            <Flex direction="column" gap="8px">
-              <S.PlatformBadge>
-                <S.PlatformIcon className={post.platformIcon} style={{ fontSize: '10px' }} />
-                {post.platform}
-              </S.PlatformBadge>
-              <Flex gap="8px" align="center">
-                <Typography variant="body" style={{ fontWeight: 700 }}>
-                  {post.user}
-                </Typography>
-                <Typography variant="small" color="#666">
-                  {post.handle}
-                </Typography>
-              </Flex>
-              <Typography variant="body">
-                {post.content}
-              </Typography>
-              
-              {post.image && <S.PostImage src={post.image} alt="Post content" />}
-
-              {post.platform === 'Twitter / X' && (
-                <Button variant="secondary" style={{ marginTop: '12px', width: 'fit-content' }}>
-                  Ver original
-                </Button>
-              )}
-
-              <S.ActionGroup>
-                <S.ActionItem hoverColor="#1d9bf0">
-                  <i className="fa-regular fa-comment"></i> {post.stats.replies}
-                </S.ActionItem>
-                <S.ActionItem hoverColor="#00ba7c">
-                  <i className="fa-solid fa-retweet"></i> {post.stats.retweets}
-                </S.ActionItem>
-                <S.ActionItem hoverColor="#f91880">
-                  <i className="fa-regular fa-heart"></i> {post.stats.likes}
-                </S.ActionItem>
-                <S.ActionItem hoverColor="#1d9bf0">
-                  <i className="fa-solid fa-chart-simple"></i> {post.stats.views}
-                </S.ActionItem>
-              </S.ActionGroup>
-            </Flex>
+        {loading && (
+          <Card padding="20px">
+            <Typography variant="body" color="#666">
+              Carregando postagens...
+            </Typography>
           </Card>
-        ))}
+        )}
+
+        {error && (
+          <Card padding="20px">
+            <Typography variant="body" color="#dc3545">
+              {error}
+            </Typography>
+          </Card>
+        )}
+
+        {!loading && !error && feedItems.length === 0 && (
+          <Card padding="20px">
+            <Typography variant="body" color="#666">
+              {view === 'salvos'
+                ? 'Nenhuma postagem salva ainda. Clique em "Salvar" em um post.'
+                : 'Nenhuma postagem encontrada para este filtro.'}
+            </Typography>
+          </Card>
+        )}
+
+        {!loading &&
+          !error &&
+          feedItems.map((post) => {
+            const meta = ORIGEM_META[post.origem] || {}
+            return (
+              <Card key={post.id} padding="20px">
+                <Flex direction="column" gap="8px">
+                  <S.PlatformBadge>
+                    <S.PlatformIcon
+                      className={meta.icon}
+                      color={meta.color}
+                      style={{ fontSize: '10px' }}
+                    />
+                    {meta.label || post.origem}
+                  </S.PlatformBadge>
+                  <Flex gap="8px" align="center">
+                    <Typography variant="body" style={{ fontWeight: 700 }}>
+                      {post.autor}
+                    </Typography>
+                    <Typography variant="small" color="#666">
+                      {post.handle}
+                    </Typography>
+                  </Flex>
+                  <Typography variant="body">{post.conteudo}</Typography>
+
+                  {post.imagem && <S.PostImage src={post.imagem} alt="Post content" />}
+
+                  {post.link && (
+                    <S.OriginalLink
+                      href={post.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button variant="secondary">Ver original</Button>
+                    </S.OriginalLink>
+                  )}
+
+                  <S.ActionGroup>
+                    <S.ActionItem hoverColor="#1d9bf0">
+                      <i className="fa-regular fa-comment"></i> {post.replies}
+                    </S.ActionItem>
+                    <S.ActionItem hoverColor="#00ba7c">
+                      <i className="fa-solid fa-retweet"></i> {post.retweets}
+                    </S.ActionItem>
+                    <S.ActionItem hoverColor="#f91880">
+                      <i className="fa-regular fa-heart"></i> {post.likes}
+                    </S.ActionItem>
+                    <S.ActionItem hoverColor="#1d9bf0">
+                      <i className="fa-solid fa-chart-simple"></i> {post.views}
+                    </S.ActionItem>
+                    <S.ActionItem
+                      as="button"
+                      hoverColor="#f7b500"
+                      saved={!!post.salvo}
+                      onClick={() => handleToggleSave(post)}
+                      title={post.salvo ? 'Remover dos salvos' : 'Salvar'}
+                    >
+                      <i className={`${post.salvo ? 'fa-solid' : 'fa-regular'} fa-bookmark`}></i>{' '}
+                      {post.salvo ? 'Salvo' : 'Salvar'}
+                    </S.ActionItem>
+                  </S.ActionGroup>
+                </Flex>
+              </Card>
+            )
+          })}
       </S.Feed>
 
       <S.TrendsSidebar className="trends-sidebar">
