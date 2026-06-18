@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import bcrypt from 'bcryptjs'
-import { db, initDb, ORIGENS } from './db.js'
+import { db, initDb, ORIGENS, parseContagem } from './db.js'
 import { signToken, requireAuth, optionalAuth } from './auth.js'
 
 const app = express()
@@ -67,7 +67,7 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
 // Lista as postagens. Aceita ?origem=Youtube|Instagram|Twitter|Noticia e ?salvos=true.
 // 'salvo' é calculado em relação ao usuário autenticado (se houver token).
 app.get('/api/posts', optionalAuth, (req, res) => {
-  const { origem, salvos } = req.query
+  const { origem, salvos, topico } = req.query
 
   if (origem && !ORIGENS.includes(origem)) {
     return res.status(400).json({ error: `Origem inválida. Use uma de: ${ORIGENS.join(', ')}` })
@@ -77,26 +77,48 @@ app.get('/api/posts', optionalAuth, (req, res) => {
   }
 
   const userId = req.user?.id ?? 0
-  const params = [userId]
+  // Dois placeholders de userId: um para o JOIN de salvos, outro para o de curtidas
+  const params = [userId, userId]
   const where = []
 
   if (origem) {
     where.push('p.origem = ?')
     params.push(origem)
   }
+  if (topico) {
+    where.push('p.topico = ?')
+    params.push(topico)
+  }
   if (salvos === 'true') {
     where.push('s.user_id IS NOT NULL')
   }
 
   const sql = `
-    SELECT p.*, CASE WHEN s.user_id IS NOT NULL THEN 1 ELSE 0 END AS salvo
+    SELECT p.*,
+      CASE WHEN s.user_id IS NOT NULL THEN 1 ELSE 0 END AS salvo,
+      CASE WHEN l.user_id IS NOT NULL THEN 1 ELSE 0 END AS curtido
     FROM posts p
     LEFT JOIN saved_posts s ON s.post_id = p.id AND s.user_id = ?
+    LEFT JOIN liked_posts l ON l.post_id = p.id AND l.user_id = ?
     ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
     ORDER BY p.id DESC
   `
 
   res.json(db.prepare(sql).all(...params))
+})
+
+// Lista os tópicos existentes com a contagem de postagens de cada um
+app.get('/api/topicos', (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT topico AS nome, COUNT(*) AS total
+       FROM posts
+       WHERE topico IS NOT NULL
+       GROUP BY topico
+       ORDER BY topico`
+    )
+    .all()
+  res.json(rows)
 })
 
 // Busca uma postagem específica
@@ -125,6 +147,31 @@ app.patch('/api/posts/:id/salvar', requireAuth, (req, res) => {
   res.json({ id: postId, salvo: salvo ? 1 : 0 })
 })
 
+// Curte ou descurte uma postagem ({ curtido: true|false }).
+// Incrementa/decrementa o contador 'curtidas' sem permitir curtida dupla.
+app.patch('/api/posts/:id/curtir', requireAuth, (req, res) => {
+  const postId = Number(req.params.id)
+  const curtido = !!req.body.curtido
+
+  const post = db.prepare('SELECT id FROM posts WHERE id = ?').get(postId)
+  if (!post) return res.status(404).json({ error: 'Postagem não encontrada' })
+
+  const jaCurtiu = db
+    .prepare('SELECT 1 FROM liked_posts WHERE user_id = ? AND post_id = ?')
+    .get(req.user.id, postId)
+
+  if (curtido && !jaCurtiu) {
+    db.prepare('INSERT INTO liked_posts (user_id, post_id) VALUES (?, ?)').run(req.user.id, postId)
+    db.prepare('UPDATE posts SET curtidas = curtidas + 1 WHERE id = ?').run(postId)
+  } else if (!curtido && jaCurtiu) {
+    db.prepare('DELETE FROM liked_posts WHERE user_id = ? AND post_id = ?').run(req.user.id, postId)
+    db.prepare('UPDATE posts SET curtidas = MAX(0, curtidas - 1) WHERE id = ?').run(postId)
+  }
+
+  const { curtidas } = db.prepare('SELECT curtidas FROM posts WHERE id = ?').get(postId)
+  res.json({ id: postId, curtido: curtido ? 1 : 0, curtidas })
+})
+
 // Cria uma nova postagem (requer login)
 app.post('/api/posts', requireAuth, (req, res) => {
   const { origem, autor, handle, conteudo, imagem, link, replies, retweets, likes, views } = req.body
@@ -138,8 +185,8 @@ app.post('/api/posts', requireAuth, (req, res) => {
 
   const result = db
     .prepare(
-      `INSERT INTO posts (origem, autor, handle, conteudo, imagem, link, replies, retweets, likes, views)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO posts (origem, autor, handle, conteudo, imagem, link, replies, retweets, likes, views, curtidas)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       origem,
@@ -151,7 +198,8 @@ app.post('/api/posts', requireAuth, (req, res) => {
       replies ?? '0',
       retweets ?? '0',
       likes ?? '0',
-      views ?? '0'
+      views ?? '0',
+      parseContagem(likes ?? '0')
     )
 
   const post = db.prepare('SELECT * FROM posts WHERE id = ?').get(result.lastInsertRowid)

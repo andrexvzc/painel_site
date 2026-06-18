@@ -247,21 +247,81 @@ export const ActionItem = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  color: ${props => (props.saved ? props.hoverColor || props.theme.primary : props.theme.textSecondary)};
+  color: ${props =>
+    props.saved || props.liked
+      ? props.hoverColor || props.theme.primary
+      : props.theme.textSecondary};
   font-size: 13px;
   cursor: pointer;
   transition: color 0.2s;
 
-  /* Reset para quando renderizado como <button> (botão de salvar) */
+  /* Reset para quando renderizado como <button> (curtir / salvar) */
   background: none;
   border: none;
   padding: 0;
   font-family: inherit;
-  font-weight: ${props => (props.saved ? 600 : 400)};
+  font-weight: ${props => (props.saved || props.liked ? 600 : 400)};
 
   &:hover {
     color: ${props => props.hoverColor || props.theme.primary};
   }
+`
+
+export const BackButton = styled.button`
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: ${props => props.theme.text};
+  font-size: 1rem;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: ${props => props.theme.border};
+  }
+`
+
+// Grade de tópicos: cards menores que os do feed, exibidos em largura total
+export const TopicGrid = styled.div`
+  column-span: all;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+`
+
+export const TopicCard = styled.button`
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid ${props => props.theme.cardBorder};
+  background-color: ${props => props.theme.surface};
+  color: ${props => props.theme.text};
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: ${props => props.theme.primary};
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+`
+
+export const TopicName = styled.span`
+  font-weight: 700;
+  font-size: 15px;
+`
+
+export const TopicCount = styled.span`
+  font-size: 12px;
+  color: ${props => props.theme.textSecondary};
 `
 
 export const ThemeToggle = styled.button`

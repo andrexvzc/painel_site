@@ -7,13 +7,25 @@ import { Input } from '@components/common/Input'
 import { Button } from '@components/common/Button'
 import { ThemeContext } from '@/store/context/ThemeContext'
 import { useAuth } from '@store/authStore'
-import { getPosts, getSavedPosts, setSaved, ORIGEM_META } from '@services/posts'
+import {
+  getPosts,
+  getSavedPosts,
+  getTopicos,
+  getPostsByTopico,
+  setSaved,
+  setLiked,
+  formatContagem,
+  ORIGEM_META,
+} from '@services/posts'
 import * as S from './Home.styles'
 
 const Home = () => {
   const [activeFilter, setActiveFilter] = useState('Tudo')
-  const [view, setView] = useState('feed') // 'feed' | 'salvos'
+  const [view, setView] = useState('feed') // 'feed' | 'salvos' | 'topicos'
   const [feedItems, setFeedItems] = useState([])
+  const [topicos, setTopicos] = useState([])
+  const [selectedTopico, setSelectedTopico] = useState(null)
+  const [topicoOrigem, setTopicoOrigem] = useState('Tudo') // filtro de origem dentro de um tópico
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const { isDarkMode, toggleTheme } = useContext(ThemeContext)
@@ -48,7 +60,30 @@ const Home = () => {
     setLoading(true)
     setError(null)
 
-    const carregar = view === 'salvos' ? getSavedPosts() : getPosts(filterToOrigem[activeFilter])
+    // Aba Tópicos sem tema selecionado: carrega a lista de tópicos
+    if (view === 'topicos' && !selectedTopico) {
+      getTopicos()
+        .then((data) => {
+          if (ativo) setTopicos(data)
+        })
+        .catch(() => {
+          if (ativo) setError('Não foi possível carregar os tópicos. O servidor está rodando?')
+        })
+        .finally(() => {
+          if (ativo) setLoading(false)
+        })
+      return () => {
+        ativo = false
+      }
+    }
+
+    // Demais casos: carrega postagens (feed, salvos ou de um tópico)
+    const carregar =
+      view === 'salvos'
+        ? getSavedPosts()
+        : view === 'topicos'
+          ? getPostsByTopico(selectedTopico, filterToOrigem[topicoOrigem])
+          : getPosts(filterToOrigem[activeFilter])
 
     carregar
       .then((data) => {
@@ -64,7 +99,22 @@ const Home = () => {
     return () => {
       ativo = false
     }
-  }, [activeFilter, view])
+  }, [activeFilter, view, selectedTopico, topicoOrigem])
+
+  // Curte ou descurte uma postagem, atualizando o contador retornado pelo servidor
+  const handleToggleLike = async (post) => {
+    const novoCurtido = !post.curtido
+    try {
+      const res = await setLiked(post.id, novoCurtido)
+      setFeedItems((itens) =>
+        itens.map((p) =>
+          p.id === post.id ? { ...p, curtido: res.curtido, curtidas: res.curtidas } : p
+        )
+      )
+    } catch {
+      setError('Não foi possível curtir a postagem.')
+    }
+  }
 
   // Salva ou remove uma postagem dos salvos
   const handleToggleSave = async (post) => {
@@ -90,14 +140,19 @@ const Home = () => {
     { label: 'Twitter / X', icon: 'fa-brands fa-twitter', view: 'feed', filter: 'Twitter' },
     { label: 'YouTube', icon: 'fa-brands fa-youtube', view: 'feed', filter: 'Youtube' },
     { label: 'Notícias', icon: 'fa-solid fa-newspaper', view: 'feed', filter: 'Noticia' },
+    { label: 'Tópicos', icon: 'fa-solid fa-hashtag', view: 'topicos' },
     { label: 'Salvos', icon: 'fa-solid fa-bookmark', view: 'salvos' },
     { label: 'Notificações', icon: 'fa-solid fa-bell' },
   ]
 
   // Navegação da sidebar: define a view e, para origens, o filtro do feed
   const handleSidebarClick = (item) => {
+    setSelectedTopico(null)
+    setTopicoOrigem('Tudo')
     if (item.view === 'salvos') {
       setView('salvos')
+    } else if (item.view === 'topicos') {
+      setView('topicos')
     } else if (item.view === 'feed') {
       setView('feed')
       setActiveFilter(item.filter)
@@ -106,6 +161,7 @@ const Home = () => {
 
   const isSidebarActive = (item) => {
     if (item.view === 'salvos') return view === 'salvos'
+    if (item.view === 'topicos') return view === 'topicos'
     if (item.view === 'feed') return view === 'feed' && activeFilter === item.filter
     return false
   }
@@ -181,6 +237,42 @@ const Home = () => {
                   Postagens salvas
                 </Typography>
               </Flex>
+            ) : view === 'topicos' ? (
+              selectedTopico ? (
+                <Flex align="center" gap="12px" style={{ flexWrap: 'wrap' }}>
+                  <S.BackButton onClick={() => setSelectedTopico(null)} title="Voltar aos tópicos">
+                    <i className="fa-solid fa-arrow-left"></i>
+                  </S.BackButton>
+                  <i className="fa-solid fa-hashtag" style={{ color: '#1d9bf0' }}></i>
+                  <Typography variant="h3" style={{ margin: 0 }}>
+                    {selectedTopico}
+                  </Typography>
+                  <S.FilterContainer style={{ marginTop: 0, marginLeft: '4px' }}>
+                    {filters.map((filter) => (
+                      <S.FilterPill
+                        key={filter.value}
+                        active={topicoOrigem === filter.value}
+                        onClick={() => setTopicoOrigem(filter.value)}
+                      >
+                        <S.PlatformIcon className={filter.icon} style={{ marginRight: '6px' }} />
+                        {filter.label}
+                      </S.FilterPill>
+                    ))}
+                  </S.FilterContainer>
+                </Flex>
+              ) : (
+                <Flex direction="column" gap="4px">
+                  <Flex align="center" gap="8px">
+                    <i className="fa-solid fa-hashtag" style={{ color: '#1d9bf0' }}></i>
+                    <Typography variant="h3" style={{ margin: 0 }}>
+                      Explorar Tópicos
+                    </Typography>
+                  </Flex>
+                  <Typography variant="small" color="#666">
+                    Escolha um tema para ver todas as postagens relacionadas
+                  </Typography>
+                </Flex>
+              )
             ) : (
               <Flex direction="column" gap="12px">
                 <Input
@@ -220,7 +312,27 @@ const Home = () => {
           </Card>
         )}
 
-        {!loading && !error && feedItems.length === 0 && (
+        {!loading && !error && view === 'topicos' && !selectedTopico && (
+          <S.TopicGrid>
+            {topicos.map((t) => (
+              <S.TopicCard
+                key={t.nome}
+                onClick={() => {
+                  setTopicoOrigem('Tudo')
+                  setSelectedTopico(t.nome)
+                }}
+              >
+                <S.TopicName>
+                  <i className="fa-solid fa-hashtag" style={{ marginRight: '6px', color: '#1d9bf0' }} />
+                  {t.nome}
+                </S.TopicName>
+                <S.TopicCount>{t.total} posts</S.TopicCount>
+              </S.TopicCard>
+            ))}
+          </S.TopicGrid>
+        )}
+
+        {!loading && !error && !(view === 'topicos' && !selectedTopico) && feedItems.length === 0 && (
           <Card padding="20px">
             <Typography variant="body" color="#666">
               {view === 'salvos'
@@ -232,6 +344,7 @@ const Home = () => {
 
         {!loading &&
           !error &&
+          !(view === 'topicos' && !selectedTopico) &&
           feedItems.map((post) => {
             const meta = ORIGEM_META[post.origem] || {}
             return (
@@ -274,11 +387,18 @@ const Home = () => {
                     <S.ActionItem hoverColor="#00ba7c">
                       <i className="fa-solid fa-retweet"></i> {post.retweets}
                     </S.ActionItem>
-                    <S.ActionItem hoverColor="#f91880">
-                      <i className="fa-regular fa-heart"></i> {post.likes}
+                    <S.ActionItem
+                      as="button"
+                      hoverColor="#f91880"
+                      liked={!!post.curtido}
+                      onClick={() => handleToggleLike(post)}
+                      title={post.curtido ? 'Descurtir' : 'Curtir'}
+                    >
+                      <i className={`${post.curtido ? 'fa-solid' : 'fa-regular'} fa-heart`}></i>{' '}
+                      {formatContagem(post.curtidas)}
                     </S.ActionItem>
-                    <S.ActionItem hoverColor="#1d9bf0">
-                      <i className="fa-solid fa-chart-simple"></i> {post.views}
+                    <S.ActionItem hoverColor="#1d9bf0" title="Visualizações">
+                      <i className="fa-regular fa-eye"></i> {post.views}
                     </S.ActionItem>
                     <S.ActionItem
                       as="button"

@@ -27,6 +27,8 @@ export function initDb() {
       retweets  TEXT DEFAULT '0',
       likes     TEXT DEFAULT '0',
       views     TEXT DEFAULT '0',
+      curtidas  INTEGER NOT NULL DEFAULT 0,
+      topico    TEXT,
       criado_em TEXT DEFAULT (datetime('now'))
     )
   `)
@@ -54,6 +56,18 @@ export function initDb() {
     )
   `)
 
+  // Relação: postagens curtidas por cada usuário (evita curtida dupla)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS liked_posts (
+      user_id   INTEGER NOT NULL,
+      post_id   INTEGER NOT NULL,
+      criado_em TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (user_id, post_id),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+    )
+  `)
+
   migrate()
 
   // Popula o banco apenas se ainda estiver vazio
@@ -61,6 +75,17 @@ export function initDb() {
   if (total === 0) {
     seed()
   }
+}
+
+// Converte um valor textual abreviado (ex.: "12k", "1.2M", "850") em número inteiro.
+export function parseContagem(texto) {
+  if (texto == null) return 0
+  const s = String(texto).trim().toLowerCase().replace(',', '.')
+  const m = s.match(/^([\d.]+)\s*([km])?$/)
+  if (!m) return parseInt(s, 10) || 0
+  const n = parseFloat(m[1]) || 0
+  const mult = m[2] === 'm' ? 1e6 : m[2] === 'k' ? 1e3 : 1
+  return Math.round(n * mult)
 }
 
 // Migrações para bancos criados antes de novas colunas
@@ -84,6 +109,23 @@ function migrate() {
       update.run(link, autor)
     }
     console.log('Migração aplicada: coluna "link" adicionada e preenchida.')
+  }
+
+  // Coluna numérica de curtidas, para permitir incremento real ao curtir.
+  // O valor textual de exibição ('likes', ex.: "12k") é convertido em número.
+  if (!hasColumn('curtidas')) {
+    db.exec('ALTER TABLE posts ADD COLUMN curtidas INTEGER NOT NULL DEFAULT 0')
+    const update = db.prepare('UPDATE posts SET curtidas = ? WHERE id = ?')
+    for (const row of db.prepare('SELECT id, likes FROM posts').all()) {
+      update.run(parseContagem(row.likes), row.id)
+    }
+    console.log('Migração aplicada: coluna "curtidas" adicionada e preenchida a partir de "likes".')
+  }
+
+  // Tópico da postagem (categoria editorial). Distribuído entre 20 tópicos no seed.
+  if (!hasColumn('topico')) {
+    db.exec('ALTER TABLE posts ADD COLUMN topico TEXT')
+    console.log('Migração aplicada: coluna "topico" adicionada.')
   }
 
   // A coluna global 'salvo' foi substituída pela tabela saved_posts (por usuário)
